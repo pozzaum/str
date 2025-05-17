@@ -1,62 +1,83 @@
 #include "main.h"
-#include <cstdint>
-#include "miros.h"
 #include "OS_scheduler.h"
-#include "semaforo.h"
+#include "miros.h"
+#include <cstdint>
+#include <cstdio>
 
-Produtor sensor1;
-Consumidor processador1, processador2;
 
-uint32_t stack_idleThread[40];
+// Stacks para as threads
+uint32_t stack_idleThread[32];
+uint32_t stack_taskA[32];
+uint32_t stack_taskB[32];
 
-uint32_t stack_produtor[40];
-rtos::OSThread produtor;
-void main_produtor() {
+// Estruturas das threads
+rtos::OSThread threadA;
+rtos::OSThread threadB;
+
+// TaskControlBlocks das tarefas
+rtos::TaskControlBlock tcbA = {
+    .task_func = nullptr,
+    .period = 4,
+    .wcet = 1,
+    .deadline_rel = 4,
+    .deadline_abs = 4,
+    .activations = 0,
+    .conclusions = 0,
+	.ready = false,
+	.on_wait = false
+};
+
+rtos::TaskControlBlock tcbB = {
+    .task_func = nullptr,
+    .period = 5,
+    .wcet = 1,
+    .deadline_rel = 5,
+    .deadline_abs = 5,
+    .activations = 0,
+    .conclusions = 0,
+	.ready = false,
+	.on_wait = false
+};
+
+// Funções das tarefas
+void taskA_func() {
     while (1) {
-    	sensor1.produzir();
-    	rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
-    }
-}
+        // Simula trabalho da tarefa A
+        //printf("Tarefa A executando no tick %lu\n", rtos::OS_tickCount);
 
-uint32_t stack_consumidor1[40];
-rtos::OSThread consumidor1;
-void main_consumidor1() {
-    while (1) {
-        processador1.consumir();
+        // Marca como concluída
         rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
+
+        rtos::yield();
     }
 }
 
-uint32_t stack_consumidor2[40];
-rtos::OSThread consumidor2;
-void main_consumidor2() {
+void taskB_func() {
     while (1) {
-        processador2.consumir();
+        // Simula trabalho da tarefa B
+        //printf("Tarefa B executando no tick %lu\n", rtos::OS_tickCount);
+
+        // Marca como concluída
         rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
+
+        rtos::yield();
     }
 }
 
+int main(void) {
+    // Inicializa as threads com suas funções e stacks
 
-int main(void)
-{
-	  srand(HAL_GetTick());
-	  rtos::OS_init(stack_idleThread, sizeof(stack_idleThread));
+	rtos::OS_init(stack_idleThread, sizeof(stack_idleThread));
 
-	  //start blinky1 thread
-	  rtos::OSThread_start(&produtor,
-	                       &main_produtor,
-	                       stack_produtor, sizeof(stack_produtor));
+    OSThread_start(&threadA, &taskA_func, stack_taskA, sizeof(stack_taskA));
+    OSThread_start(&threadB, &taskB_func, stack_taskB, sizeof(stack_taskB));
 
-	  rtos::OSThread_start(&consumidor1,
-	                       &main_consumidor1,
-	                       stack_consumidor1, sizeof(stack_consumidor1));
+    // Associa cada thread ao seu TaskControlBlock
+    add_thread_with_task(&threadA, &tcbA);
+    add_thread_with_task(&threadB, &tcbB);
+    // Inicia o RTOS (loop principal)
+    rtos::OS_run();
 
-	  rtos::OSThread_start(&consumidor2,
-	                       &main_consumidor2,
-	                       stack_consumidor2, sizeof(stack_consumidor2));
-
-
-
-	  //transfer control to the RTOS to run the threads
-	  rtos::OS_run();
+    // Nunca deve chegar aqui
+    while (1) {}
 }

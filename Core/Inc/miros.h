@@ -15,6 +15,7 @@ typedef struct {
     uint32_t activations;		// ativacões
     uint32_t conclusions;		// conclusões
     bool ready;             	// flag se está pronta
+    bool on_wait;
 } TaskControlBlock;
 
 typedef struct {
