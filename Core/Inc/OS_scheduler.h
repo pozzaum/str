@@ -16,6 +16,8 @@ extern void mark_task_completed(TaskControlBlock* task);
 
 extern void update_task_deadlines(void);
 
+extern void monitor_overruns(void);
+
 extern void OS_scheduler(void);
 
 }

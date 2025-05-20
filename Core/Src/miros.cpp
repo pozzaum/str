@@ -56,10 +56,11 @@ void OS_run(void) {
 void OS_tick(void) {
 	__disable_irq();
 
-	OS_tickCount = OS_tickCount + 1;
-
 	update_ready_tasks();
 	update_task_deadlines();
+	monitor_overruns();
+
+	OS_tickCount = OS_tickCount + 1;
 
 	__enable_irq();
 }
@@ -71,7 +72,6 @@ void OS_delay(uint32_t ticks) {
     Q_REQUIRE(OS_curr != OS_thread[0]);
 
     OS_curr->tcb->wcet = ticks;
-    OS_curr->tcb->ready = false;
     OS_readySet &= ~(1U << (OS_currIdx - 1U));
     OS_sched();
     __asm volatile ("cpsie i");

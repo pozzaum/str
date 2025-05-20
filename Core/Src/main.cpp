@@ -9,10 +9,13 @@
 uint32_t stack_idleThread[32];
 uint32_t stack_taskA[32];
 uint32_t stack_taskB[32];
+uint32_t stack_taskC[32];
+uint32_t conta0, conta1, conta2;
 
 // Estruturas das threads
 rtos::OSThread threadA;
 rtos::OSThread threadB;
+rtos::OSThread threadC;
 
 // TaskControlBlocks das tarefas
 rtos::TaskControlBlock tcbA = {
@@ -20,9 +23,10 @@ rtos::TaskControlBlock tcbA = {
     .period = 4,
     .wcet = 1,
     .deadline_rel = 4,
-    .deadline_abs = 4,
+    .deadline_abs = 0,
     .activations = 0,
     .conclusions = 0,
+	.overruns = 0,
 	.ready = false,
 	.on_wait = false
 };
@@ -32,9 +36,23 @@ rtos::TaskControlBlock tcbB = {
     .period = 5,
     .wcet = 1,
     .deadline_rel = 5,
-    .deadline_abs = 5,
+    .deadline_abs = 0,
     .activations = 0,
     .conclusions = 0,
+	.overruns = 0,
+	.ready = false,
+	.on_wait = false
+};
+
+rtos::TaskControlBlock tcbC = {
+    .task_func = nullptr,
+    .period = 9,
+    .wcet = 2,
+    .deadline_rel = 9,
+    .deadline_abs = 0,
+    .activations = 0,
+    .conclusions = 0,
+	.overruns = 0,
 	.ready = false,
 	.on_wait = false
 };
@@ -42,26 +60,36 @@ rtos::TaskControlBlock tcbB = {
 // Funções das tarefas
 void taskA_func() {
     while (1) {
-        // Simula trabalho da tarefa A
-        //printf("Tarefa A executando no tick %lu\n", rtos::OS_tickCount);
+    	conta0++;
+        //rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
 
-        // Marca como concluída
-        rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
-
-        rtos::yield();
     }
+
+    //	nunca deve entrar aqui
+    rtos::yield();
+
 }
 
 void taskB_func() {
     while (1) {
-        // Simula trabalho da tarefa B
-        //printf("Tarefa B executando no tick %lu\n", rtos::OS_tickCount);
+    	conta1++;
+        //rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
 
-        // Marca como concluída
-        rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
-
-        rtos::yield();
     }
+
+    //	nunca deve entrar aqui
+    rtos::yield();
+}
+
+void taskC_func() {
+    while (1) {
+    	conta2++;
+        //rtos::mark_task_completed(rtos::OS_thread[rtos::OS_currIdx]->tcb);
+
+    }
+
+    //	nunca deve entrar aqui
+    rtos::yield();
 }
 
 int main(void) {
@@ -71,10 +99,12 @@ int main(void) {
 
     OSThread_start(&threadA, &taskA_func, stack_taskA, sizeof(stack_taskA));
     OSThread_start(&threadB, &taskB_func, stack_taskB, sizeof(stack_taskB));
+    OSThread_start(&threadC, &taskC_func, stack_taskC, sizeof(stack_taskC));
 
     // Associa cada thread ao seu TaskControlBlock
     add_thread_with_task(&threadA, &tcbA);
     add_thread_with_task(&threadB, &tcbB);
+    add_thread_with_task(&threadC, &tcbC);
     // Inicia o RTOS (loop principal)
     rtos::OS_run();
 
