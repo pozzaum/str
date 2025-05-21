@@ -18,6 +18,8 @@ extern void update_task_deadlines(void);
 
 extern void monitor_overruns(void);
 
+extern void init_task_control_block(TaskControlBlock* tcb, uint32_t period, uint32_t wcet, uint32_t deadline_rel);
+
 extern void OS_scheduler(void);
 
 }

@@ -65,17 +65,27 @@ void OS_tick(void) {
 	__enable_irq();
 }
 
-void OS_delay(uint32_t ticks) {
-    __asm volatile ("cpsid i");
 
-    /* never call OS_delay from the idleThread */
+void OS_delay(uint32_t ticks) {
+    __disable_irq();
+
+    // nunca chame OS_delay da idleThread
     Q_REQUIRE(OS_curr != OS_thread[0]);
 
-    OS_curr->tcb->wcet = ticks;
+    // marca a tarefa como não pronta
+    OS_curr->tcb->ready = false;
+    OS_curr->tcb->on_wait = true;
+    // limpa o bit de readySet
     OS_readySet &= ~(1U << (OS_currIdx - 1U));
-    OS_sched();
-    __asm volatile ("cpsie i");
- }
+
+    __enable_irq();
+
+    // aguarda ate que a tarefa seja reativada pelo escalonador
+    while (!OS_curr->tcb->ready) {
+        yield();
+    }
+}
+
 
 void OSThread_start(
     OSThread *me,

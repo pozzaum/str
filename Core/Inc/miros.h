@@ -14,6 +14,7 @@ typedef struct {
     uint32_t deadline_abs;		// próxima deadline absoluta (em ticks)
     uint32_t activations;		// ativacões
     uint32_t conclusions;		// conclusões
+    uint32_t last_release;
     uint32_t overruns;
     bool ready;             	// flag se está pronta
     bool on_wait;
